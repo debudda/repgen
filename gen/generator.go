@@ -1,4 +1,4 @@
-package main
+package gen
 
 import (
 	"encoding/json"
@@ -165,7 +165,7 @@ func createFiles(interfaceFile, implementFile, mockFile string, node *ast.File, 
 	}
 }
 
-func main() {
+func Main() {
 	api := newApi()
 	sourceFile := os.Args[1]
 	interfaceFile := os.Args[2]
