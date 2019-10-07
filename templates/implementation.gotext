@@ -137,11 +137,44 @@ func (ar {{$struct.RepositoryName}}) FindBy{{$field.Name}}({{$field.VarName}} {{
 
 {{if $field.Tag.IsSearchable -}}
 func (ar {{$struct.RepositoryName}}) FindBy{{$field.Name}}({{$field.VarName}} {{$field.Type}}) ([]*{{$.Package}}.{{$struct.StructName}}, error) {
-	rows, err := ar.tx.Query(`SELECT {{range $i, $field := $struct.Fields -}}
-                    {{if gt $i 0 -}}, {{end -}}
-                    {{$field.Tag.DbFieldName -}}
-        {{end}}
-		FROM {{$struct.Table}} WHERE {{if gt (len $struct.Active.SQLCondition) 0}}{{$struct.Active.SQLCondition}} and{{end}} {{$field.Tag.DbFieldName}}=$1;`, {{$field.VarName}})
+
+	{{if $field.Tag.IsJson -}}
+		var jsonMap map[string]interface{}
+		err := json.Unmarshal({{$field.VarName}}, &jsonMap)
+		if err != nil {
+			return nil, err
+		}
+
+		var (
+			wheres []string
+			vals []interface{}
+			id = 1
+		)
+		for key, val := range jsonMap {
+			wheres = append(wheres, fmt.Sprintf(`{{$field.Tag.DbFieldName}}::json ->> %s = %d`, key, id))
+			vals = append(vals, val)
+			id++
+		}
+
+		query := `SELECT {{range $i, $field := $struct.Fields -}}
+			{{if gt $i 0 -}}, {{end -}}
+			{{$field.Tag.DbFieldName -}}
+			{{end}}
+			FROM {{$struct.Table}}
+		`
+
+		if len(wheres) > 0 {
+			query += strings.Join(wheres, " AND ")
+		}
+
+		rows, err := ar.tx.Query(query, vals...)
+	{{else}}
+		rows, err := ar.tx.Query(`SELECT {{range $i, $field := $struct.Fields -}}
+						{{if gt $i 0 -}}, {{end -}}
+						{{$field.Tag.DbFieldName -}}
+			{{end}}
+			FROM {{$struct.Table}} WHERE {{if gt (len $struct.Active.SQLCondition) 0}}{{$struct.Active.SQLCondition}} and{{end}} {{$field.Tag.DbFieldName}}=$1;`, {{$field.VarName}})
+	{{end -}}
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

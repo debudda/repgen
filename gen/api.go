@@ -50,6 +50,7 @@ type tagInfo struct {
 	DbFieldName  string
 	IsPrimary    bool
 	IsSearchable bool
+	IsJson       bool
 }
 
 func newApi() *entityApi {
@@ -140,6 +141,8 @@ func (e *entityStruct) parseTag(f *structField, tag string) tagInfo {
 			result.IsPrimary = true
 		case "searchable":
 			result.IsSearchable = true
+		case "json":
+			result.IsJson = true
 		case "field":
 			result.DbFieldName = "\"" + val + "\""
 		case "searchGroup":
