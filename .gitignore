@@ -1,1 +1,5 @@
 /.idea
+repgen
+/examples/example.gen.go
+/examples/example.mock.gen.go
+/examples/example.rep.gen.go

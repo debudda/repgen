@@ -2,7 +2,7 @@ package examples
 
 import "time"
 
-// go:ddd {"table": "examples"}
+// gen:ddd {"table": "examples"}
 type Example struct {
 	Id           *int       `db:"field=id,primary"`
 	Name         string     `db:"field=name"`

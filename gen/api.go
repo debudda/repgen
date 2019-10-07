@@ -2,6 +2,7 @@ package gen
 
 import (
 	"encoding/json"
+	"fmt"
 	"go/ast"
 	"log"
 	"strings"
@@ -63,22 +64,29 @@ func getFieldType(field *ast.Field) (string, bool) {
 		fieldType string
 	)
 
-	if ident, ok := field.Type.(*ast.Ident); ok {
-		fieldType = ident.Name
-	} else if star, ok := field.Type.(*ast.StarExpr); ok {
+	switch val := field.Type.(type) {
+	case *ast.Ident:
+		fieldType = val.Name
+	case *ast.SelectorExpr:
+		var packageName string
+		switch ident := val.X.(type) {
+		case *ast.Ident:
+			packageName = ident.Name
+		}
+		fieldType = fmt.Sprintf("%s.%s", packageName, val.Sel.Name)
+	case *ast.StarExpr:
 		isPointer = true
 
-		if ident, ok := star.X.(*ast.Ident); ok {
+		if ident, ok := val.X.(*ast.Ident); ok {
 			fieldType = ident.Name
 		}
 
-		if selectorExpr, ok := star.X.(*ast.SelectorExpr); ok {
+		if selectorExpr, ok := val.X.(*ast.SelectorExpr); ok {
 			if ident, ok := selectorExpr.X.(*ast.Ident); ok {
 				fieldType = ident.Name + "." + selectorExpr.Sel.Name
 			}
 		}
 	}
-
 	return fieldType, isPointer
 }
 
